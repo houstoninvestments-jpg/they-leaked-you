@@ -137,8 +137,10 @@ export async function runDaily(opts: {
       break;
     }
     if (!chosen) {
+      await buildSite(ledger.leaks, path("dist"));
+      report.steps.push({step:"site",status:"rebuilt locally from existing ledger; no new notice or upload"});
       report.status = "skipped";
-      report.errors.push("No notice safely qualified");
+      report.reason = "No notice safely qualified";
       return report;
     }
     report.review = chosen.review;

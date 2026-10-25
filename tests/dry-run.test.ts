@@ -1,5 +1,5 @@
 import { it, expect, vi } from "vitest";
-const state = vi.hoisted(() => ({ writes: [] as string[] }));
+const state = vi.hoisted(() => ({ writes: [] as string[], noNotices: false }));
 vi.mock("../src/voice/index.js", () => ({
   synthesize: () => ({
     provider: "kokoro",
@@ -16,7 +16,7 @@ vi.mock("../src/render/index.js", () => ({
   readWindowChecks: () => ({ card: 0, result: 0 }),
   extractCover: () => ({ file: "/preview.jpg" }),
 }));
-vi.mock("../src/site/build.js", () => ({ buildSite: () => "/dist" }));
+vi.mock("../src/site/build.js", () => ({ buildSite: vi.fn(() => "/dist") }));
 vi.mock("../src/lib/util.js", async (importOriginal) => {
   const original = await importOriginal<any>();
   return {
@@ -25,7 +25,7 @@ vi.mock("../src/lib/util.js", async (importOriginal) => {
       state.writes.push(name);
     },
     readJson: (name: string, fallback: any) =>
-      name.endsWith("notices.json") || name.endsWith("channel.json")
+      state.noNotices && name.endsWith("notices.json") ? [] : name.endsWith("notices.json") || name.endsWith("channel.json")
         ? original.readJson(name)
         : fallback,
   };
@@ -63,4 +63,11 @@ it("dry-run never calls any network, AI, upload or deploy even with all credenti
   expect(state.writes.some((p) => p.endsWith("data/ledger.json"))).toBe(false);
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
+});
+
+import {buildSite} from "../src/site/build.js";
+it("no qualified notice rebuilds the existing local site without upload",async()=>{
+ state.noNotices=true;vi.mocked(buildSite).mockClear();const trap=vi.fn(()=>{throw Error("Network forbidden")});vi.stubGlobal("fetch",trap);
+ try {const result=await runDaily({dryRun:true,offline:true,llm:null});expect(result.status).toBe("skipped");expect(result.errors).toEqual([]);expect(result.reason).toBe("No notice safely qualified");expect(buildSite).toHaveBeenCalledOnce();expect(trap).not.toHaveBeenCalled();}
+ finally{state.noNotices=false;vi.unstubAllGlobals();}
 });
