@@ -1,0 +1,49 @@
+[
+  {
+    "id": "25702",
+    "company": "Poppins Payroll Company",
+    "characterization": "reported a breach affecting",
+    "reportedDate": "2026-09-29",
+    "exposedDate": "2026-09-03",
+    "count": 17954,
+    "countScope": "Washington residents",
+    "dataTypes": [
+      "Name",
+      "Social Security Number",
+      "Financial & Banking Information",
+      "Full Date of Birth"
+    ],
+    "emailOnly": false,
+    "sourceUrl": "https://data.wa.gov/resource/sb4j-ca4h.json?id=25702",
+    "publisher": "Washington Attorney General",
+    "verifiedAt": "2026-10-25T06:53:00Z",
+    "evidence": [
+      {
+        "field": "company",
+        "quote": "Poppins Payroll Company",
+        "url": "https://data.wa.gov/resource/sb4j-ca4h.json?id=25702"
+      },
+      {
+        "field": "reportedDate",
+        "quote": "2026-09-29T00:00:00.000",
+        "url": "https://data.wa.gov/resource/sb4j-ca4h.json?id=25702"
+      },
+      {
+        "field": "count",
+        "quote": "17954",
+        "url": "https://data.wa.gov/resource/sb4j-ca4h.json?id=25702"
+      },
+      {
+        "field": "dataTypes",
+        "quote": "Name; Social Security Number; Financial & Banking Information; Full Date of Birth",
+        "url": "https://data.wa.gov/resource/padd-mby7.json?id=25702"
+      },
+      {
+        "field": "exposedDate",
+        "quote": "2026-09-03T00:00:00.000",
+        "url": "https://data.wa.gov/resource/sb4j-ca4h.json?id=25702"
+      }
+    ],
+    "humanNoticeUrl": "https://www.atg.wa.gov/poppins-payroll-company"
+  }
+]

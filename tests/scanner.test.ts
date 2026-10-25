@@ -1,0 +1,15 @@
+import {it,expect} from 'vitest';
+import {mkdtempSync,mkdirSync,copyFileSync,writeFileSync,rmSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {execFileSync,spawnSync} from 'node:child_process';
+function fixture(action:(dir:string)=>void){const d=mkdtempSync(join(tmpdir(),'scan-regression-'));try{mkdirSync(join(d,'scripts'));copyFileSync('scripts/scan.py',join(d,'scripts/scan.py'));execFileSync('git',['init','-q'],{cwd:d});action(d);}finally{rmSync(d,{recursive:true,force:true});}}
+it('rejects secret staged then removed from working copy without printing it',()=>fixture(d=>{const secret='sk-'+'ant-'+ 'x'.repeat(40);writeFileSync(join(d,'config.txt'),secret);execFileSync('git',['add','config.txt'],{cwd:d});writeFileSync(join(d,'config.txt'),'clean');const r=spawnSync('python3',['scripts/scan.py'],{cwd:d,encoding:'utf8'});expect(r.status).toBe(1);expect(r.stdout).toContain('index:config.txt');expect(r.stdout).not.toContain(secret);}));
+it('rejects staged environment files even without known token patterns',()=>fixture(d=>{writeFileSync(join(d,'.env.production'),'PLACEHOLDER=yes');execFileSync('git',['add','-f','.env.production'],{cwd:d});const r=spawnSync('python3',['scripts/scan.py'],{cwd:d,encoding:'utf8'});expect(r.status).toBe(1);expect(r.stdout).toContain('credential file');}));
+function commitFixture(d:string,message='Safe test commit',author='GitHub Author'){
+ const address=['author','example.test'].join('@');
+ execFileSync('git',['-c','user.name=GitHub Committer','-c',`user.email=${address}`,'commit','-m',message],{cwd:d,env:{...process.env,GIT_AUTHOR_NAME:author,GIT_AUTHOR_EMAIL:address,GIT_COMMITTER_NAME:'GitHub Committer',GIT_COMMITTER_EMAIL:address},stdio:'pipe'});
+}
+it('allows normal author and committer email attribution only',()=>fixture(d=>{writeFileSync(join(d,'safe.txt'),'safe');execFileSync('git',['add','safe.txt'],{cwd:d});commitFixture(d);const r=spawnSync('python3',['scripts/scan.py','--history'],{cwd:d,encoding:'utf8'});expect(r.status).toBe(0);}));
+it('still rejects email in committed files and commit messages',()=>fixture(d=>{const address=['person','example.test'].join('@');writeFileSync(join(d,'data.txt'),address);execFileSync('git',['add','data.txt'],{cwd:d});commitFixture(d,'Contact '+address);writeFileSync(join(d,'data.txt'),'clean working copy');const r=spawnSync('python3',['scripts/scan.py','--history'],{cwd:d,encoding:'utf8'});expect(r.status).toBe(1);expect(r.stdout).toContain('commit-message');expect(r.stdout).toContain('data.txt');expect(r.stdout).not.toContain(address);}));
+it('rejects secrets even in otherwise allowed attribution metadata',()=>fixture(d=>{const secret='sk-'+'ant-'+'x'.repeat(40);writeFileSync(join(d,'safe.txt'),'safe');execFileSync('git',['add','safe.txt'],{cwd:d});commitFixture(d,'Safe test commit',secret);const r=spawnSync('python3',['scripts/scan.py','--history'],{cwd:d,encoding:'utf8'});expect(r.status).toBe(1);expect(r.stdout).toContain('provider token');expect(r.stdout).not.toContain(secret);}));

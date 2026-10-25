@@ -1,0 +1,9 @@
+{
+ "channel":{"name":"They Leaked You","handle":"@TheyLeakedYou","closer":"Check if you're in it.","notAdvice":"We never ask for your information. Facts from public breach notices.","policyDate":"2026-10-25"},
+ "models":{"writer":"claude-fable-5-1","checker":"claude-opus-5-5"},
+ "voice":{"provider":"kokoro","kokoroVoice":"am_michael","lang":"en-us","speed":0.95},
+ "cadence":{"timezone":"America/Los_Angeles","shortsPerDay":3,"slots":[{"slot":1,"pacific":"08:00"},{"slot":2,"pacific":"13:00"},{"slot":3,"pacific":"18:00"}]},
+ "site":{"baseUrl":"https://theyleakedyou.pages.dev"},
+ "affiliate":{"enabled":false,"label":"Paid link"},"newsletter":{"enabled":false},
+ "youtube":{"categoryId":"25","defaultLanguage":"en","privacyStatus":"private"}
+}

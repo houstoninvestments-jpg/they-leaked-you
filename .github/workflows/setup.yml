@@ -1,0 +1,36 @@
+name: Set up and deploy They Leaked You
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: they-leaked-you-pages-production
+  cancel-in-progress: false
+jobs:
+  setup:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run scan
+      - name: Build public pages without paid calls
+        run: npm run site
+      - name: Deploy only the dedicated project and enable owner authorization
+        run: node --import tsx src/cli.ts setup
+      - name: Owner next step
+        run: |
+          printf '%s\n' '## Site setup completed' 'Open https://theyleakedyou.pages.dev/auth/youtube to review the policies and connect @TheyLeakedYou. No YouTube upload or schedule was enabled by this workflow.' >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,62 @@
+{
+  "number": 1,
+  "hook": "A breach notice. The facts.",
+  "card": {
+    "company": "Example Company (fixture)",
+    "reportDate": "2026-10-25",
+    "affectedCount": "Not disclosed",
+    "dataTypes": [
+      "Email addresses"
+    ],
+    "emailOnly": false,
+    "sourceLabel": "Fixture only \u00b7 not a real incident",
+    "sourceUrl": "https://example.invalid/fixture"
+  },
+  "severity": "UNKNOWN",
+  "timeline": {
+    "fps": 30,
+    "total": 480,
+    "beats": [
+      {
+        "id": "hook",
+        "from": 0,
+        "to": 90
+      },
+      {
+        "id": "receipt",
+        "from": 90,
+        "to": 180
+      },
+      {
+        "id": "read",
+        "from": 180,
+        "to": 228
+      },
+      {
+        "id": "result",
+        "from": 228,
+        "to": 300
+      },
+      {
+        "id": "stamp",
+        "from": 300,
+        "to": 390
+      },
+      {
+        "id": "scoreboard",
+        "from": 390,
+        "to": 468
+      },
+      {
+        "id": "tail",
+        "from": 468,
+        "to": 480
+      }
+    ],
+    "captions": []
+  },
+  "testLabel": "OFFLINE FIXTURE \u00b7 NOT AI-VALIDATED",
+  "voiceLabel": "AI voice \u00b7 Kokoro",
+  "closer": "Check if you\u2019re in it.",
+  "disclaimer": "We never ask for your information. Facts from public breach notices."
+}

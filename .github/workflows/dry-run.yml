@@ -1,0 +1,82 @@
+name: Daily safe preview
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 15 * * *"
+    - cron: "0 16 * * *"
+    - cron: "0 20 * * *"
+    - cron: "0 21 * * *"
+    - cron: "0 1 * * *"
+    - cron: "0 2 * * *"
+permissions:
+  contents: write
+concurrency:
+  group: they-leaked-you-preview
+  cancel-in-progress: false
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      ENABLE_PUBLICATION: ${{ vars.ENABLE_PUBLICATION || 'false' }}
+      APPROVE_PUBLIC_UPLOADS: ${{ vars.APPROVE_PUBLIC_UPLOADS || 'false' }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      SCHEDULE_CRON: ${{ github.event.schedule }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - run: npm ci
+      - run: python -m pip install -r requirements-voice.txt
+      - run: npm run typecheck && npm test && npm run scan
+      - uses: actions/cache@v4
+        with:
+          path: models/kokoro
+          key: kokoro-v1.0-int8
+      - run: |
+          mkdir -p models/kokoro
+          test -f models/kokoro/kokoro-v1.0.int8.onnx || curl -fL https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.int8.onnx -o models/kokoro/kokoro-v1.0.int8.onnx
+          test -f models/kokoro/voices-v1.0.bin || curl -fL https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin -o models/kokoro/voices-v1.0.bin
+      - name: Run safe preview or explicitly enabled live slot
+        id: engine
+        run: |
+          if [ "$ENABLE_PUBLICATION" = true ] && [ -n "$SCHEDULE_CRON" ] && [ -n "$ANTHROPIC_API_KEY" ] && [ -n "$YOUTUBE_CLIENT_ID" ] && [ -n "$YOUTUBE_CLIENT_SECRET" ] && [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "mode=live" >> "$GITHUB_OUTPUT"
+            node --import tsx src/cli.ts daily --live
+          else
+            echo "mode=dry" >> "$GITHUB_OUTPUT"
+            npm run dry-run
+          fi
+      - name: Persist only target ledger and cost records
+        if: always() && steps.engine.outputs.mode == 'live'
+        run: |
+          git add data/
+          python3 scripts/scan.py
+          if ! git diff --cached --quiet; then
+            GIT_AUTHOR_NAME=they-leaked-you GIT_AUTHOR_EMAIL='' GIT_COMMITTER_NAME=they-leaked-you GIT_COMMITTER_EMAIL='' git -c user.name=they-leaked-you -c user.email='' commit -m "Record scheduled engine outcome"
+            python3 scripts/scan.py --history
+            git push origin HEAD:main
+          fi
+      - run: npm run health
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: leak-preview-${{ github.run_id }}
+          path: |
+            work/latest/
+            dist/
+            data/costs.json
+          retention-days: 14

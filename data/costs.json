@@ -1,0 +1,28 @@
+[
+  {
+    "at": "2026-10-25T06:57:35.595Z",
+    "status": "rendered",
+    "dryRun": true,
+    "calls": [],
+    "usd": 0,
+    "actualModelCalls": 0
+  },
+  {
+    "at": "2026-10-25T07:03:13.059Z",
+    "status": "rendered",
+    "dryRun": true,
+    "basis": "estimated USD from inherited reference rate table dated 2026-10-06; not verified billing",
+    "calls": [],
+    "usd": 0,
+    "actualModelCalls": 0
+  },
+  {
+    "at": "2026-10-25T07:06:43.418Z",
+    "status": "rendered",
+    "dryRun": true,
+    "basis": "estimated USD from inherited reference rate table dated 2026-10-06; not verified billing",
+    "calls": [],
+    "usd": 0,
+    "actualModelCalls": 0
+  }
+]
